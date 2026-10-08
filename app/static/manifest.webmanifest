@@ -1,0 +1,14 @@
+{
+  "name": "Gestor de fugas OGI",
+  "short_name": "Fugas OGI",
+  "description": "Ciclo de vida de fugas: detección, reparación y re-inspección.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1a24",
+  "theme_color": "#0f1a24",
+  "lang": "es",
+  "icons": [
+    { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

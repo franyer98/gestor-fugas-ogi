@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a24">
+<title>Gestor de fugas OGI</title>
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#f3f5f7; --card:#ffffff; --texto:#15202b; --suave:#5b6b7a; --linea:#dde3e9;
+  --acento:#0b6bcb; --acento-t:#ffffff;
+  --verde:#1f8f5f; --ambar:#c98408; --rojo:#cf3a3a; --gris:#7a8896;
+  --alta:#cf3a3a; --media:#c98408; --baja:#4a7fb0;
+  --radio:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1a24; --card:#172430; --texto:#e8eef3; --suave:#93a3b2; --linea:#26384a;
+    --acento:#4da3ff; --acento-t:#06121d; --verde:#3fc08a; --ambar:#e5ad3a; --rojo:#ef6b6b; --gris:#8a98a6;
+    --alta:#ef6b6b; --media:#e5ad3a; --baja:#6fa8dc; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--texto);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+main{max-width:680px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:0 0 12px}
+h2{font-size:1rem;margin:20px 0 8px;color:var(--suave);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.top{display:flex;align-items:center;justify-content:space-between;max-width:680px;margin:0 auto;padding:14px 16px 0}
+.top .quien{font-size:.85rem;color:var(--suave)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.btn{background:var(--acento);color:var(--acento-t);border:0;border-radius:10px;padding:12px 16px;font-weight:600;min-height:44px}
+.btn.sec{background:transparent;color:var(--acento);border:1.5px solid var(--acento)}
+.btn.peligro{background:transparent;color:var(--rojo);border:1.5px solid var(--rojo)}
+.btn.link{background:none;color:var(--suave);border:0;padding:8px;min-height:0;font-weight:500}
+.btn[disabled]{opacity:.5}
+.card{background:var(--card);border:1px solid var(--linea);border-radius:var(--radio);padding:14px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi .num{font-size:1.9rem;font-weight:700;line-height:1.1}
+.kpi .lbl{font-size:.82rem;color:var(--suave)}
+.kpi.rojo .num{color:var(--rojo)}
+.barra{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--linea);margin:8px 0 6px}
+.barra span{display:block;height:100%}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;color:var(--suave)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:baseline}
+.fila{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;-webkit-overflow-scrolling:touch}
+.chip{white-space:nowrap;border:1.5px solid var(--linea);background:var(--card);border-radius:999px;padding:8px 14px;font-size:.9rem}
+.chip.on{background:var(--acento);color:var(--acento-t);border-color:var(--acento)}
+a.item{display:block;text-decoration:none;color:inherit}
+.item .cod{font-weight:700}
+.item .sub{color:var(--suave);font-size:.88rem}
+.badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:6px;padding:2px 7px;color:#fff}
+.badge.ALTA{background:var(--alta)} .badge.MEDIA{background:var(--media)} .badge.BAJA{background:var(--baja)}
+.sem{font-size:.85rem;font-weight:600}
+.sem.VERDE{color:var(--verde)} .sem.AMARILLO{color:var(--ambar)} .sem.ROJO{color:var(--rojo)} .sem.CERRADA{color:var(--gris)}
+.estado{font-size:.8rem;color:var(--suave)}
+label{display:block;font-size:.85rem;color:var(--suave);margin:12px 0 4px}
+input,select,textarea{width:100%;background:var(--card);border:1.5px solid var(--linea);border-radius:10px;padding:11px 12px;min-height:44px}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acento);outline-offset:1px}
+.acciones{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.linea-t{border-left:2px solid var(--linea);margin-left:6px;padding-left:14px}
+.ev{position:relative;padding-bottom:14px}
+.ev::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--acento)}
+.ev .q{font-size:.82rem;color:var(--suave)}
+.vacio{color:var(--suave);text-align:center;padding:28px 0}
+.nota-pie{font-size:.78rem;color:var(--suave);margin-top:8px}
+.error{background:color-mix(in srgb,var(--rojo) 14%,transparent);color:var(--rojo);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.92rem}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--linea);
+  display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs a{flex:1;max-width:220px;text-align:center;padding:12px 4px;text-decoration:none;color:var(--suave);font-size:.82rem;font-weight:600}
+nav.tabs a.on{color:var(--acento)}
+nav.tabs a span{display:block;font-size:1.25rem;line-height:1.2}
+.login{max-width:380px;margin:8vh auto 0}
+.login .logo{width:56px;height:56px;margin-bottom:8px}
+.demo{display:flex;gap:8px;margin-top:6px}
+.demo .btn{flex:1;padding:10px 6px;font-size:.88rem}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<main id="vista" aria-live="polite"></main>
+<nav class="tabs" id="tabs" hidden></nav>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- sesión ---------- */
+let sesion = null;
+try { sesion = JSON.parse(sessionStorage.getItem("sesion")); } catch (_) {}
+function guardarSesion(s) {
+  sesion = s;
+  try { s ? sessionStorage.setItem("sesion", JSON.stringify(s)) : sessionStorage.removeItem("sesion"); } catch (_) {}
+}
+
+/* ---------- API ---------- */
+class ErrorApi extends Error {}
+async function api(ruta, opciones = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (sesion) headers.Authorization = "Bearer " + sesion.token;
+  let r;
+  try { r = await fetch(ruta, { ...opciones, headers }); }
+  catch (_) { throw new ErrorApi("Sin conexión con el servidor. Reintenta en unos segundos."); }
+  if (r.status === 401 && sesion) { guardarSesion(null); location.hash = "#/login"; throw new ErrorApi("La sesión expiró."); }
+  if (!r.ok) {
+    let msg = "Error " + r.status;
+    try { const d = (await r.json()).detail; msg = typeof d === "string" ? d : "Revisa los datos ingresados."; } catch (_) {}
+    throw new ErrorApi(msg);
+  }
+  return r.json();
+}
+
+/* ---------- utilidades de presentación ---------- */
+const NOMBRE_ESTADO = { DETECTADA: "Detectada", EN_REPARACION: "En reparación", REPARADA: "Reparada", VERIFICADA: "Verificada" };
+const NOMBRE_ROL = { INSPECTOR: "Inspector", SUPERVISOR: "Supervisor", CUADRILLA: "Cuadrilla" };
+const NOMBRE_ACCION = { registrar: "Registrada", asignar: "Asignada", reparar: "Reparada", verificar: "Verificada", rechazar: "Re-inspección fallida" };
+const COLOR_SEM = { VERDE: "var(--verde)", AMARILLO: "var(--ambar)", ROJO: "var(--rojo)" };
+const fecha = (s) => new Date(s + "Z").toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+
+function textoPlazo(f, corto = false) {
+  const p = f.plazo; if (!p) return "";
+  if (p.semaforo === "CERRADA") return "Cerrada";
+  const n = p.dias_restantes, que = p.vigente === "primer_intento" ? "primer intento" : "cierre definitivo";
+  if (p.semaforo === "ROJO") return corto ? `Vencida hace ${Math.abs(n)} d` : `Vencida (${que}) hace ${Math.abs(n)} d`;
+  const t = n === 0 ? "vence hoy" : "faltan " + n + " d";
+  return corto ? t[0].toUpperCase() + t.slice(1) : `${que}: ${t}`;
+}
+const puede = {
+  asignar: (f) => sesion.rol === "SUPERVISOR" && ["DETECTADA", "EN_REPARACION"].includes(f.estado),
+  reparar: (f) => ["CUADRILLA", "SUPERVISOR"].includes(sesion.rol) && f.estado === "EN_REPARACION",
+  revisar: (f) => ["INSPECTOR", "SUPERVISOR"].includes(sesion.rol) && f.estado === "REPARADA",
+  crear: () => ["INSPECTOR", "SUPERVISOR"].includes(sesion.rol),
+};
+
+/* ---------- marco (barra superior y pestañas) ---------- */
+function marco(activa) {
+  const top = $("#top"), tabs = $("#tabs");
+  if (!sesion) { top.innerHTML = ""; tabs.hidden = true; return; }
+  top.innerHTML = `<div class="top"><span class="quien">${esc(sesion.username)} · ${esc(NOMBRE_ROL[sesion.rol])}</span>
+    <button class="btn link" id="salir">Salir</button></div>`;
+  $("#salir").onclick = () => { guardarSesion(null); location.hash = "#/login"; };
+  const items = [["tablero", "▦", "Tablero"], ["fugas", "☰", "Fugas"]];
+  if (puede.crear()) items.push(["nueva", "＋", "Nueva"]);
+  tabs.hidden = false;
+  tabs.innerHTML = items.map(([id, ic, tx]) =>
+    `<a href="#/${id}" class="${activa === id ? "on" : ""}"><span aria-hidden="true">${ic}</span>${tx}</a>`).join("");
+}
+const mostrar = (html) => { $("#vista").innerHTML = html; window.scrollTo(0, 0); };
+const errorHtml = (e) => `<div class="error" role="alert">${esc(e.message)}</div>`;
+
+/* ---------- vistas ---------- */
+function vistaLogin() {
+  marco(null);
+  mostrar(`<div class="login">
+    <img class="logo" src="/static/icon.svg" alt="">
+    <h1>Gestor de fugas OGI</h1>
+    <p class="estado">Seguimiento de fugas desde la detección hasta la re-inspección. Datos de demostración, no reales.</p>
+    <div id="err"></div>
+    <form id="f">
+      <label for="u">Usuario</label><input id="u" autocomplete="username" autocapitalize="none" required>
+      <label for="p">Contraseña</label><input id="p" type="password" autocomplete="current-password" required>
+      <div class="acciones"><button class="btn" type="submit">Entrar</button></div>
+    </form>
+    <label>Probar la demo como…</label>
+    <div class="demo">
+      <button class="btn sec" data-u="inspector">Inspector</button>
+      <button class="btn sec" data-u="supervisor">Supervisor</button>
+      <button class="btn sec" data-u="cuadrilla">Cuadrilla</button>
+    </div></div>`);
+  const entrar = async (u, p) => {
+    try {
+      const d = await api("/auth/login", { method: "POST", body: JSON.stringify({ username: u, password: p }) });
+      guardarSesion({ token: d.access_token, rol: d.rol, username: d.username });
+      location.hash = "#/tablero";
+    } catch (e) { $("#err").innerHTML = errorHtml(e); }
+  };
+  $("#f").onsubmit = (ev) => { ev.preventDefault(); entrar($("#u").value.trim(), $("#p").value); };
+  document.querySelectorAll(".demo .btn").forEach((b) => (b.onclick = () => entrar(b.dataset.u, "demo1234")));
+}
+
+async function vistaTablero() {
+  marco("tablero");
+  mostrar(`<h1>Tablero</h1><p class="vacio">Cargando…</p>`);
+  try {
+    const k = await api("/kpis");
+    const sem = k.abiertas_por_semaforo, totSem = Math.max(sem.VERDE + sem.AMARILLO + sem.ROJO, 1);
+    const est = k.por_estado, totEst = Math.max(k.total, 1);
+    const colEst = { DETECTADA: "var(--rojo)", EN_REPARACION: "var(--ambar)", REPARADA: "var(--baja)", VERIFICADA: "var(--verde)" };
+    const fmt = (v, suf = "") => (v === null || v === undefined ? "—" : v + suf);
+    mostrar(`<h1>Tablero</h1>
+      <div class="grid">
+        <div class="card kpi"><div class="num">${k.abiertas}</div><div class="lbl">Fugas abiertas</div></div>
+        <div class="card kpi rojo"><div class="num">${sem.ROJO}</div><div class="lbl">Con plazo vencido</div></div>
+        <div class="card kpi"><div class="num">${fmt(k.tiempo_medio_cierre_dias, " d")}</div><div class="lbl">Tiempo medio de cierre</div></div>
+        <div class="card kpi"><div class="num">${fmt(k.pct_cerradas_a_tiempo, "%")}</div><div class="lbl">Cerradas a tiempo</div></div>
+      </div>
+      <h2>Abiertas por semáforo</h2>
+      <div class="card">
+        <div class="barra" role="img" aria-label="Verde ${sem.VERDE}, amarillo ${sem.AMARILLO}, rojo ${sem.ROJO}">
+          ${["VERDE", "AMARILLO", "ROJO"].map((s) => `<span style="width:${(100 * sem[s]) / totSem}%;background:${COLOR_SEM[s]}"></span>`).join("")}
+        </div>
+        <div class="leyenda">${["VERDE", "AMARILLO", "ROJO"].map((s) =>
+          `<span><i class="dot" style="background:${COLOR_SEM[s]}"></i>${s[0] + s.slice(1).toLowerCase()} ${sem[s]}</span>`).join("")}</div>
+      </div>
+      <h2>Estado del ciclo</h2>
+      <div class="card">
+        <div class="barra" role="img" aria-label="Distribución por estado">
+          ${Object.keys(est).map((s) => `<span style="width:${(100 * est[s]) / totEst}%;background:${colEst[s]}"></span>`).join("")}
+        </div>
+        <div class="leyenda">${Object.keys(est).map((s) =>
+          `<span><i class="dot" style="background:${colEst[s]}"></i>${NOMBRE_ESTADO[s]} ${est[s]}</span>`).join("")}</div>
+      </div>
+      <h2>Emisión estimada</h2>
+      <div class="card"><div class="fila"><strong>${k.emisiones_estimadas_kg_ch4.toLocaleString("es-CO")} kg CH₄</strong>
+        <span class="estado">${k.reinspecciones_fallidas} re-inspecciones fallidas</span></div>
+        <div class="nota-pie">${esc(k.nota_emisiones)}</div></div>
+      <div class="acciones"><a class="btn" style="text-align:center;text-decoration:none" href="#/fugas?v=1">Ver fugas vencidas</a></div>`);
+  } catch (e) { mostrar(`<h1>Tablero</h1>${errorHtml(e)}`); }
+}
+
+async function vistaFugas(params) {
+  marco("fugas");
+  const filtro = params.get("estado") || "", vencidas = params.get("v") === "1";
+  mostrar(`<h1>Fugas</h1><p class="vacio">Cargando…</p>`);
+  try {
+    const q = new URLSearchParams({ limite: "200" });
+    if (filtro) q.set("estado", filtro);
+    if (vencidas) q.set("solo_vencidas", "true");
+    const lista = await api("/fugas?" + q);
+    const chip = (href, txt, on) => `<a class="chip ${on ? "on" : ""}" href="${href}" style="text-decoration:none;color:inherit">${txt}</a>`;
+    const chips = chip("#/fugas", "Todas", !filtro && !vencidas) + chip("#/fugas?v=1", "Vencidas", vencidas) +
+      Object.keys(NOMBRE_ESTADO).map((e) => chip("#/fugas?estado=" + e, NOMBRE_ESTADO[e], filtro === e)).join("");
+    mostrar(`<h1>Fugas <span class="estado">(${lista.length}, más urgentes primero)</span></h1>
+      <div class="chips">${chips}</div>
+      ${lista.length ? lista.map((f) => `
+        <a class="card item" href="#/fuga/${f.id}">
+          <div class="fila"><span class="cod">${esc(f.codigo)}</span><span class="badge ${esc(f.severidad)}">${esc(f.severidad)}</span></div>
+          <div class="sub">${esc(f.cluster)} · ${esc(f.pozo)} · ${esc(f.componente)}</div>
+          <div class="fila" style="margin-top:6px"><span class="estado">${esc(NOMBRE_ESTADO[f.estado])}${f.cuadrilla ? " · " + esc(f.cuadrilla.nombre) : ""}</span>
+            <span class="sem ${esc(f.plazo.semaforo)}">${esc(textoPlazo(f, true))}</span></div>
+        </a>`).join("") : `<p class="vacio">No hay fugas con este filtro.</p>`}`);
+  } catch (e) { mostrar(`<h1>Fugas</h1>${errorHtml(e)}`); }
+}
+
+async function vistaDetalle(id) {
+  marco("fugas");
+  mostrar(`<p class="vacio">Cargando…</p>`);
+  try {
+    const f = await api("/fugas/" + id);
+    const cuadrillas = f.estado !== "VERIFICADA" && puede.asignar(f) ? await api("/cuadrillas") : [];
+    const bloqueAcciones = [];
+    if (puede.asignar(f)) bloqueAcciones.push(`
+      <div class="card"><strong>${f.estado === "DETECTADA" ? "Asignar cuadrilla" : "Reasignar cuadrilla"}</strong>
+        <label for="cua">Cuadrilla</label>
+        <select id="cua">${cuadrillas.map((c) => `<option value="${c.id}" ${f.cuadrilla && f.cuadrilla.id === c.id ? "selected" : ""}>${esc(c.nombre)}</option>`).join("")}</select>
+        <div class="acciones"><button class="btn" data-a="asignar">Asignar</button></div></div>`);
+    if (puede.reparar(f)) bloqueAcciones.push(`
+      <div class="card"><strong>Registrar reparación</strong>
+        <label for="nota">Qué se hizo</label><textarea id="nota" placeholder="Ej.: cambio de empaque y reapriete"></textarea>
+        <div class="acciones"><button class="btn" data-a="reparar">Marcar como reparada</button></div></div>`);
+    if (puede.revisar(f)) bloqueAcciones.push(`
+      <div class="card"><strong>Re-inspección OGI</strong>
+        <label for="nota">Resultado</label><textarea id="nota" placeholder="Ej.: sin pluma a 3 m"></textarea>
+        <div class="acciones"><button class="btn" data-a="verificar">Cerrar: sin fuga</button>
+          <button class="btn peligro" data-a="rechazar">La fuga persiste</button></div></div>`);
+
+    mostrar(`<a href="#/fugas" class="estado" style="text-decoration:none">← Volver</a>
+      <h1 style="margin-top:6px">${esc(f.codigo)} <span class="badge ${esc(f.severidad)}">${esc(f.severidad)}</span></h1>
+      <div class="card">
+        <div class="fila"><span>${esc(f.cluster)} · ${esc(f.pozo)}</span><span class="estado">${esc(NOMBRE_ESTADO[f.estado])}</span></div>
+        <div>${esc(f.componente)}</div>
+        ${f.descripcion ? `<div class="sub" style="margin-top:6px">${esc(f.descripcion)}</div>` : ""}
+        <div class="fila" style="margin-top:10px"><span class="sem ${esc(f.plazo.semaforo)}">${esc(textoPlazo(f))}</span>
+          <span class="estado">${f.antiguedad_dias} d de antigüedad</span></div>
+        <div class="estado" style="margin-top:4px">Cuadrilla: ${f.cuadrilla ? esc(f.cuadrilla.nombre) : "sin asignar"} · Re-inspecciones fallidas: ${f.reinspecciones_fallidas}</div>
+        ${/^https?:\/\//.test(f.foto_url || "") ? `<div style="margin-top:8px"><a href="${esc(f.foto_url)}" target="_blank" rel="noopener noreferrer">Ver foto</a></div>` : ""}
+      </div>
+      <div id="err"></div>
+      ${bloqueAcciones.join("")}
+      <h2>Historial</h2>
+      <div class="linea-t">${f.eventos.map((e) => `
+        <div class="ev"><strong>${esc(NOMBRE_ACCION[e.accion] || e.accion)}</strong> <span class="estado">→ ${esc(NOMBRE_ESTADO[e.a_estado] || e.a_estado)}</span>
+          ${e.nota ? `<div>${esc(e.nota)}</div>` : ""}
+          <div class="q">${esc(e.usuario)} · ${esc(fecha(e.fecha))}</div></div>`).join("")}</div>`);
+
+    document.querySelectorAll("button[data-a]").forEach((b) => (b.onclick = async () => {
+      const accion = b.dataset.a, nota = ($("#nota") || { value: "" }).value.trim();
+      const cuerpo = accion === "asignar" ? { cuadrilla_id: Number($("#cua").value) } : { nota };
+      document.querySelectorAll("button[data-a]").forEach((x) => (x.disabled = true));
+      try { await api(`/fugas/${id}/${accion}`, { method: "POST", body: JSON.stringify(cuerpo) }); vistaDetalle(id); }
+      catch (e) { $("#err").innerHTML = errorHtml(e); document.querySelectorAll("button[data-a]").forEach((x) => (x.disabled = false)); }
+    }));
+  } catch (e) { mostrar(`<a href="#/fugas" class="estado">← Volver</a>${errorHtml(e)}`); }
+}
+
+function vistaNueva() {
+  marco("nueva");
+  if (!puede.crear()) { location.hash = "#/tablero"; return; }
+  mostrar(`<h1>Registrar fuga</h1><div id="err"></div>
+    <form id="f" class="card">
+      <label for="cl">Cluster</label><input id="cl" required maxlength="40" placeholder="CLUSTER-01">
+      <label for="po">Pozo</label><input id="po" required maxlength="40" placeholder="POZO-007">
+      <label for="co">Componente</label><input id="co" required maxlength="60" placeholder="Brida, válvula, sello…">
+      <label for="se">Severidad</label>
+      <select id="se"><option value="ALTA">Alta: pluma visible y persistente</option><option value="MEDIA" selected>Media: pluma intermitente</option><option value="BAJA">Baja: pluma leve</option></select>
+      <label for="de">Descripción (opcional)</label><textarea id="de"></textarea>
+      <label for="fo">Enlace a la foto (opcional)</label><input id="fo" type="url" inputmode="url" placeholder="https://…">
+      <div class="acciones"><button class="btn" type="submit">Registrar</button></div>
+    </form>`);
+  $("#f").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const cuerpo = { cluster: $("#cl").value.trim(), pozo: $("#po").value.trim(), componente: $("#co").value.trim(),
+      severidad: $("#se").value, descripcion: $("#de").value.trim(), foto_url: $("#fo").value.trim() || null };
+    try { const f = await api("/fugas", { method: "POST", body: JSON.stringify(cuerpo) }); location.hash = "#/fuga/" + f.id; }
+    catch (e) { $("#err").innerHTML = errorHtml(e); }
+  };
+}
+
+/* ---------- enrutador ---------- */
+function ruta() {
+  const [path, qs] = (location.hash.slice(1) || "/").split("?");
+  const params = new URLSearchParams(qs || "");
+  if (!sesion && path !== "/login") { location.hash = "#/login"; return; }
+  if (sesion && (path === "/" || path === "/login")) { location.hash = "#/tablero"; return; }
+  const m = path.match(/^\/fuga\/(\d+)$/);
+  if (path === "/login") return vistaLogin();
+  if (path === "/tablero") return vistaTablero();
+  if (path === "/fugas") return vistaFugas(params);
+  if (path === "/nueva") return vistaNueva();
+  if (m) return vistaDetalle(Number(m[1]));
+  location.hash = "#/tablero";
+}
+window.addEventListener("hashchange", ruta);
+ruta();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gestor-fugas-ogi
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEMO_SEED
+        value: "true"
+      - key: DEMO_PASSWORD
+        value: demo1234
