@@ -96,7 +96,7 @@ def _ejecutar(db, fuga, accion, usuario: Usuario, settings, **kw):
 router = APIRouter()
 
 
-@router.get("/", include_in_schema=False)
+@router.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 def interfaz():
     return FileResponse(ESTATICOS / "index.html", headers={"Cache-Control": "no-cache"})
 

@@ -120,6 +120,7 @@ def test_semilla_demo_genera_datos_consistentes():
 def test_interfaz_estatica(client):
     r = client.get("/")
     assert r.status_code == 200 and "Gestor de fugas OGI" in r.text
+    assert client.head("/").status_code == 200  # sondeos de Render/UptimeRobot
     assert client.get("/sw.js").headers["content-type"].startswith("application/javascript")
     assert client.get("/static/manifest.webmanifest").status_code == 200
     assert client.get("/static/icon.svg").status_code == 200
